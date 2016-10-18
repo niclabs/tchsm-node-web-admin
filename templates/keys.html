@@ -1,4 +1,24 @@
 {% extends "layout.html" %}
+{% from "macros.html" import render_field %}
 {% block body %}
-  <p>Keys</p>
+<p>Keys</p>
+Hi {{ current_user.email }}! <br>
+<a href={{url_for('logout')}}>Logout</a>
+<br>
+<form method=post action={{url_for('keys')}}>
+    <dl>
+        {{ render_field(form.name) }}
+        {{ render_field(form.key) }}
+    </dl>
+    <p><input type=submit value='Add Key'>
+</form>
+<br>
+<ul>
+    {% for key in key_list %}
+    <li> {{ key.name }}
+        <a href={{url_for('delete_key', key_id=key.id)}}>Delete</a> <br>
+        {{ key.data }} <br>
+    </li>
+    {% endfor %}
+</ul>
 {% endblock %}
