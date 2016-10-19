@@ -1,7 +1,8 @@
-from flask import Flask, redirect, url_for, render_template, request, flash
+from flask import Flask, redirect, url_for, render_template, request, flash, abort
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-
 
 app = Flask(__name__)
 app.config.from_object('config.DefaultConfig')
@@ -12,8 +13,7 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
-
-from models import User, Key
+from models import User, Instance, Key
 from forms import *
 
 
@@ -36,8 +36,9 @@ def login():
             flash('Invalid password', 'error')
             return redirect(url_for('login'))
         login_user(user)
+        next = request.args.get('next')
         flash('Successfully logged in', 'error')
-        return redirect('/keys')
+        return redirect(next or url_for('keys'))
     return render_template('login.html', form=form)
 
 
@@ -61,20 +62,61 @@ def keys():
     form = KeyCreationForm(request.form)
     key_list = Key.query.filter_by(user_id=int(current_user.get_id())).all()
     if request.method == 'POST' and form.validate():
-        name = form.name.data
+        tag = form.tag.data
         key = form.key.data
         user = current_user
-        new_key = Key(name, key, user)
-        db.session.add(new_key)
-        db.session.commit()
+        last_id = db.session.query(func.max(Key.id)).scalar()
+        if last_id is None:
+            last_id = 0
+        future_id = last_id + 1
+        instance_id = "%s__%s" % (str(current_user.id), str(future_id))
+        new_instance = Instance(instance_id, key)
+        new_key = Key(tag, user, new_instance)
+        try:
+            db.session.add(new_instance)
+            db.session.add(new_key)
+            db.session.commit()
+        except IntegrityError as e:
+            flash("Key is already in the database")
+            redirect(url_for('keys'))
         return redirect(url_for('keys'))
     return render_template('keys.html', form=form, key_list=key_list)
+
+
+def user_owns_key(key_id):
+    user = current_user
+    key = Key.query.get_or_404(key_id)
+    return key.user_id == user.id
+
+
+@app.route('/edit_key/<int:key_id>', methods=['GET', 'POST'])
+@login_required
+def edit_key(key_id):
+    if not user_owns_key(key_id):
+        abort(403)
+    key = Key.query.get_or_404(key_id)
+    instance = key.instance
+    form = KeyCreationForm(request.form)
+    if request.method == 'POST' and form.validate():
+        key.tag = form.tag.data
+        instance.public_key =form.key.data
+        db.session.add(key)
+        db.session.add(instance)
+        db.session.commit()
+        return redirect(url_for('keys'))
+    form.tag.data = key.tag
+    form.key.data = instance.public_key
+    return render_template('edit_key.html', key_id=key.id, form=form)
 
 
 @app.route('/delete_key/<int:key_id>')
 @login_required
 def delete_key(key_id):
-    key = Key.query.get(key_id)
+    if not user_owns_key(key_id):
+        abort(403)
+    key = Key.query.get_or_404(key_id)
+    instance = key.instance
+    db.session.delete(instance)
     db.session.delete(key)
     db.session.commit()
     return redirect(url_for('keys'))
@@ -86,8 +128,6 @@ def logout():
     flash('User %s logged out' % current_user.email)
     logout_user()
     return redirect(url_for('login'))
-
-
 
 
 if __name__ == "__main__":

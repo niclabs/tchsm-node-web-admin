@@ -24,7 +24,7 @@ class RegistrationForm(Form):
 
 
 class KeyCreationForm(Form):
-    name = StringField('Key Name', [
+    tag = StringField('Key Tag', [
         validators.DataRequired()
     ])
     key = TextAreaField('Key', [
