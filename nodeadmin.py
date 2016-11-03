@@ -62,23 +62,18 @@ def keys():
     form = KeyCreationForm(request.form)
     key_list = Key.query.filter_by(user_id=int(current_user.get_id())).all()
     if request.method == 'POST' and form.validate():
-        tag = form.tag.data
+        instance_id = form.instance_id.data
         key = form.key.data
         user = current_user
-        last_id = db.session.query(func.max(Key.id)).scalar()
-        if last_id is None:
-            last_id = 0
-        future_id = last_id + 1
-        instance_id = "%s__%s" % (str(current_user.id), str(future_id))
         new_instance = Instance(instance_id, key)
-        new_key = Key(tag, user, new_instance)
+        new_key = Key(user, new_instance)
         try:
             db.session.add(new_instance)
             db.session.add(new_key)
             db.session.commit()
         except IntegrityError as e:
-            flash("Key is already in the database")
-            redirect(url_for('keys'))
+            flash("The database already has a key with that instance id.")
+            return redirect(url_for('keys'))
         return redirect(url_for('keys'))
     return render_template('keys.html', form=form, key_list=key_list)
 
@@ -96,15 +91,13 @@ def edit_key(key_id):
         abort(403)
     key = Key.query.get_or_404(key_id)
     instance = key.instance
-    form = KeyCreationForm(request.form)
+    form = KeyEditionForm(request.form)
     if request.method == 'POST' and form.validate():
-        key.tag = form.tag.data
-        instance.public_key =form.key.data
+        instance.public_key = form.key.data
         db.session.add(key)
         db.session.add(instance)
         db.session.commit()
         return redirect(url_for('keys'))
-    form.tag.data = key.tag
     form.key.data = instance.public_key
     return render_template('edit_key.html', key_id=key.id, form=form)
 
