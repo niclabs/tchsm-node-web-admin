@@ -56,15 +56,13 @@ class Instance(db.Model):
 class Key(db.Model):
     __tablename__ = 'user_key'
     id = db.Column('key_id', db.Integer, primary_key=True)
-    tag = db.Column('key_name', db.String(100), index=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     instance_id = db.Column(db.Text, db.ForeignKey('instance.instance_id'))
     instance = db.relationship(Instance)
 
-    def __init__(self, tag, user, instance):
-        self.tag = tag
+    def __init__(self, user, instance):
         self.user = user
         self.instance = instance
 
     def __repr__(self):
-        return '<Key %r from %r>' % (self.tag, self.user)
+        return '<Key %r from %r>' % (self.instance_id, self.user)

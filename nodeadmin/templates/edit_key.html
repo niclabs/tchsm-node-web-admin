@@ -4,7 +4,6 @@
 <p>Edit Key</p>
 <form method=post action={{url_for('edit_key', key_id=key_id)}}>
     <dl>
-        {{ render_field(form.tag) }}
         {{ render_field(form.key) }}
     </dl>
     <p><input type=submit value='Edit Key'>

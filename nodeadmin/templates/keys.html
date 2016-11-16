@@ -1,13 +1,20 @@
 {% extends "layout.html" %}
 {% from "macros.html" import render_field %}
 {% block body %}
-<p>Keys</p>
+
 Hi {{ current_user.email }}! <br>
 <a href={{url_for('logout')}}>Logout</a>
+
+<p>Node Public Key</p>
+{{ config.NODE_PUBLIC_KEY }}
+<p>Keys</p>
 <br>
 <form method=post action={{url_for('keys')}}>
     <dl>
-        {{ render_field(form.tag) }}
+        The instance id of the master that will request operations. Must be unique for this node.
+        {{ render_field(form.instance_id) }}
+        <br>
+        The public key of the master that will request operations.
         {{ render_field(form.key) }}
     </dl>
     <p><input type=submit value='Add Key'>
@@ -16,7 +23,7 @@ Hi {{ current_user.email }}! <br>
 <ul>
     {% for key in key_list %}
     <li>
-        Tag: {{ key.tag }}
+        Instance Id: {{ key.instance_id }}
         <a href={{url_for('edit_key', key_id=key.id)}}>Edit</a>
         <!--a href={{url_for('delete_key', key_id=key.id)}} onclick="confirmDelete(key.id)">Delete</a-->
         <a href="#" onclick="confirmDelete('{{key.id}}');event.preventDefault();">Delete</a>
