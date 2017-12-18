@@ -42,4 +42,18 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
+from nodeadmin.models import User
+from sqlalchemy import exc
+try:
+	admin = db.session.query(User).filter_by(email=app.config['ADMIN_EMAIL']).all()
+	if len(admin) == 0:
+		print("Admin user not found, creating it from config file")
+		user = User(app.config['ADMIN_EMAIL'], app.config['ADMIN_PASSWORD'])
+		db.session.add(user)
+		db.session.commit()
+except exc.SQLAlchemyError:
+	print("Failed to create admin user")
+
+
+
 from nodeadmin.views import *

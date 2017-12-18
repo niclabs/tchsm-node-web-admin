@@ -4,6 +4,8 @@
 
 Hi {{ current_user.email }}! <br>
 <a href={{url_for('logout')}}>Logout</a>
+ <br>
+<a href={{url_for('register')}}>Register a new admin user</a>
 
 <p>Node Public Key</p>
 {{ config.NODE_PUBLIC_KEY }}

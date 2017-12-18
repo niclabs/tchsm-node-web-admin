@@ -5,3 +5,5 @@ class DefaultConfig(object):
     SQLALCHEMY_DATABASE_URI = 'sqlite:///node.db'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     NODE_PUBLIC_KEY = 'node public key'
+    ADMIN_EMAIL = 'admin@e.mail'
+    ADMIN_PASSWORD = '12345'
