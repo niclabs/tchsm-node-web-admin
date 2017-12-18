@@ -31,7 +31,19 @@ class KeyCreationForm(Form):
         validators.DataRequired()
     ])
 
+
 class KeyEditionForm(Form):
     key = TextAreaField('Key', [
         validators.DataRequired()
     ])
+
+
+class PasswordChangeForm(Form):
+    current_password = PasswordField('Current Password', [
+        validators.DataRequired()
+    ])
+    new_password = PasswordField('New Password', [
+        validators.DataRequired(),
+        validators.EqualTo('confirm', message='Passwords must match')
+    ])
+    confirm = PasswordField('Repeat Password')

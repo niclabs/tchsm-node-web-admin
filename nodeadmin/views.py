@@ -31,8 +31,26 @@ def login():
         return redirect(next or url_for('keys'))
     return render_template('login.html', form=form)
 
+@app.route('/change_password', methods=['GET', 'POST'])
+def change_password():
+    form = PasswordChangeForm(request.form)
+    if request.method == 'POST' and form.validate():
+        current_password = form.current_password.data
+        new_password = form.new_password.data
+        user = current_user
+        if not current_user.check_password(current_password):
+            flash('Invalid password', 'error')
+            return redirect(url_for('change_password'))
+        current_user.set_password(new_password)
+        db.session.add(user)
+        db.session.commit()
+        flash('User successfully updated')
+        return redirect(url_for('keys'))
+    return render_template('change_password.html', form=form)
+
 
 @app.route('/register', methods=['GET', 'POST'])
+@login_required
 def register():
     form = RegistrationForm(request.form)
     if request.method == 'POST' and form.validate():
@@ -41,8 +59,8 @@ def register():
         user = User(email, password)
         db.session.add(user)
         db.session.commit()
-        flash('User successfully registered')
-        return redirect(url_for('login'))
+        flash('User %s successfully registered' % email)
+        return redirect(url_for('keys'))
     return render_template('register.html', form=form)
 
 
@@ -104,6 +122,7 @@ def logout():
     flash('User %s logged out' % current_user.email)
     logout_user()
     return redirect(url_for('login'))
+
 
 def user_owns_key(key_id):
     user = current_user
